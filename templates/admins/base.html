@@ -1,0 +1,469 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="{% static 'HIC_LOGO_TRANSPARENT.png' %}" type="image/png">
+  <title>{% block title %}Dashboard{% endblock %}</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  {% block extra_head %}
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap JS (Popper included) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    
+
+  {% endblock %}
+  <script>
+    tailwind.config = {
+        theme: {
+        extend: {
+            transitionProperty: {
+            'width': 'width'
+            }
+        }
+        }
+    }
+    </script>
+
+    <style>
+    .sidebar-collapsed {
+        width: 4rem;
+    }
+
+    .sidebar-expanded {
+        width: 16rem;
+    }
+
+    .sidebar-collapsed .nav-text,
+    .sidebar-collapsed .logo-text {
+        display: none;
+    }
+    /* ================= TOAST BASE ================= */
+
+    .simple-toast {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: transform 0.35s ease, opacity 0.35s ease;
+        width: 100%;
+        max-width: 420px;
+        margin: auto;
+    }
+
+    .simple-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+
+/* ================= DESKTOP POSITION ================= */
+
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1055;
+    }
+
+
+    /* ================= MOBILE POSITION ================= */
+
+    /* Fix Bootstrap toast width on mobile */
+    @media (max-width: 768px) {
+
+        .toast-container {
+            top: auto;
+            right: auto;
+            bottom: 80px;
+            left: 0;
+            width: 100%;
+            padding: 0 16px;
+        }
+
+        .toast-container .toast {
+            max-width: none !important;
+            width: 100%;
+            border: 1px solid gray;
+        }
+
+        .simple-toast {
+            width: 100%;
+            max-width: 100%;
+            margin: auto;
+            border: 1px solid gray;
+        }
+
+    }
+
+
+    /* ================= SLIDE IN ANIMATION ================= */
+
+    @keyframes toastSlide {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .simple-toast.show {
+        animation: toastSlide 0.35s ease;
+    }
+
+
+    /* ================= RIPPLE EFFECT ================= */
+
+    .ripple {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ripple::after {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        transform: scale(0);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .ripple:active::after {
+        transform: scale(12);
+        opacity: 1;
+        transition: transform 0.4s ease, opacity 0.8s ease;
+    }
+    </style>
+    <!-- Include CSS -->
+    <link rel="stylesheet" href="{% static 'css/toast.css' %}">
+    <!-- Include JS -->
+    <script src="{% static 'js/home/toast.js' %}"></script>
+
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3 mb-20" style="z-index:1055;">
+
+        {% for message in messages %}
+        <div class="toast align-items-center text-bg-light border border-gray-200 mb-2"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            data-bs-delay="2000">
+            <div class="d-flex">
+                <!-- Icon -->
+                <div class="toast-body d-flex align-items-center gap-2">
+                    <span class="material-icons" style="font-size: 20px;">
+                        {% if message.tags == 'success' %}check_circle{% endif %}
+                        {% if message.tags == 'error' %}error{% endif %}
+                        {% if message.tags == 'warning' %}warning{% endif %}
+                        {% if message.tags == 'info' %}info{% endif %}
+                    </span>
+                    {{ message }}
+                </div>
+
+                <!-- Close button -->
+                <button type="button"
+                        class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast">
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+
+<div class="flex flex-col md:flex-row h-screen">
+
+  <aside class="hidden md:flex md:flex-col w-64 bg-white border-r border-gray-200 text-gray-800">
+
+    <!-- Logo -->
+    <div class="px-6 py-5 flex items-center gap-3 border-b">
+        <img src="{% static 'HIC_LOGO_TRANSPARENT.png' %}" class="h-8 w-auto">
+        <span class="font-semibold text-lg tracking-tight">Faculty Eval</span>
+    </div>
+
+    {% with request.resolver_match.url_name as current %}
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-3 py-4 space-y-1">
+
+        <!-- Dashboard -->
+        <a href="{% url 'dashboard_home' %}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+           {% if current == 'dashboard_home' %}
+               bg-blue-50 text-blue-700 font-medium shadow-sm
+           {% else %}
+               text-gray-600 hover:bg-gray-100 hover:text-gray-900
+           {% endif %}">
+            <span class="material-icons text-[20px]">dashboard</span>
+            Dashboard
+        </a>
+
+        <!-- Sections -->
+        <a href="{% url 'sections_list' %}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+           {% if current == 'sections_list' %}
+               bg-blue-50 text-blue-700 font-medium shadow-sm
+           {% else %}
+               text-gray-600 hover:bg-gray-100 hover:text-gray-900
+           {% endif %}">
+            <span class="material-icons text-[20px]">list_alt</span>
+            Sections & Questions
+        </a>
+
+        <!-- Faculty -->
+        <a href="{% url 'teachers_list' %}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+           {% if current == 'teachers_list' %}
+               bg-blue-50 text-blue-700 font-medium shadow-sm
+           {% else %}
+               text-gray-600 hover:bg-gray-100 hover:text-gray-900
+           {% endif %}">
+            <span class="material-icons text-[20px]">group</span>
+            Faculty
+        </a>
+
+        <!-- Courses -->
+        <a href="{% url 'courses_list' %}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+           {% if current == 'courses_list' %}
+               bg-blue-50 text-blue-700 font-medium shadow-sm
+           {% else %}
+               text-gray-600 hover:bg-gray-100 hover:text-gray-900
+           {% endif %}">
+            <span class="material-icons text-[20px]">library_books</span>
+            Courses
+        </a>
+
+        <!-- Subjects -->
+        <a href="{% url 'subjects_list' %}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+           {% if current == 'subjects_list' %}
+               bg-blue-50 text-blue-700 font-medium shadow-sm
+           {% else %}
+               text-gray-600 hover:bg-gray-100 hover:text-gray-900
+           {% endif %}">
+            <span class="material-icons text-[20px]">menu_book</span>
+            Subjects
+        </a>
+
+        <!-- Evaluations -->
+        <a href="{% url 'evaluations_list' %}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+           {% if current == 'evaluations_list' %}
+               bg-blue-50 text-blue-700 font-medium shadow-sm
+           {% else %}
+               text-gray-600 hover:bg-gray-100 hover:text-gray-900
+           {% endif %}">
+            <span class="material-icons text-[20px]">assignment</span>
+            Evaluations
+        </a>
+
+    </nav>
+
+    {% endwith %}
+
+    <!-- Logout -->
+    <div class="px-3 py-4 border-t">
+        <button
+            class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-red-600 transition hover:bg-red-50"
+            data-bs-toggle="modal"
+            data-bs-target="#logoutModal">
+
+            <span class="material-icons text-[20px]">logout</span>
+            Logout
+        </button>
+    </div>
+
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+
+                <div class="modal-header border-0 align-items-center gap-3">
+                    <div class="bg-red-100 p-2 rounded-full">
+                        <span class="material-icons text-red-600">logout</span>
+                    </div>
+
+                    <h5 class="modal-title mb-0 fw-semibold">
+                        Confirm Logout
+                    </h5>
+
+                    <button class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body text-muted">
+                    Are you sure you want to log out?
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button class="btn btn-light" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <a href="{% url 'admin_logout' %}" class="btn btn-danger px-4">
+                        Logout
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</aside>
+
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col overflow-auto md:mb-4 mb-10">
+    <!-- Content -->
+    <main id="mainContent" class="md:p-6 p-3 flex-1 overflow-auto">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+    {% with request.resolver_match.url_name as current_url %}
+    <nav id="mobileNav"
+        class="fixed bottom-4 left-4 right-4 md:hidden z-50 transition-all duration-300">
+
+        <div class="nav-container flex justify-between px-1 py-1">
+
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard_home' %}"
+            class="nav-item {% if current_url == 'dashboard_home' %}active{% endif %}">
+                <span class="material-icons">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+
+            <!-- Faculty -->
+            <a href="{% url 'teachers_list' %}"
+            class="nav-item {% if current_url == 'teachers_list' %}active{% endif %}">
+                <span class="material-icons">group</span>
+                <span>Faculty</span>
+            </a>
+
+            <!-- Courses -->
+            <a href="{% url 'courses_list' %}"
+            class="nav-item {% if current_url == 'courses_list' %}active{% endif %}">
+                <span class="material-icons">library_books</span>
+                <span>Courses</span>
+            </a>
+
+            <!-- Evaluations -->
+            <a href="{% url 'evaluations_list' %}"
+            class="nav-item {% if current_url == 'evaluations_list' %}active{% endif %}">
+                <span class="material-icons">assignment</span>
+                <span>Eval</span>
+            </a>
+
+            <!-- More -->
+            <div class="relative flex-1 flex justify-center">
+
+                <button onclick="toggleMoreMenu()" class="nav-item">
+                    <span class="material-icons">more_horiz</span>
+                    <span>More</span>
+                </button>
+
+                <!-- Dropdown -->
+                <div id="moreMenu"
+                    class="hidden absolute bottom-16 right-0 w-60 bg-white/95 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-xl overflow-hidden z-[100]">
+
+                    <a href="{% url 'subjects_list' %}" class="menu-item">
+                        <span class="material-icons">menu_book</span>
+                        Subjects
+                    </a>
+
+                    <a href="{% url 'sections_list' %}" class="menu-item">
+                        <span class="material-icons">quiz</span>
+                        Sections & Questions
+                    </a>
+
+                    <hr class="my-1">
+
+                    <button class="menu-item text-red-600"
+                            data-bs-toggle="modal"
+                            data-bs-target="#logoutModalMobile">
+                        <span class="material-icons text-red-500">logout</span>
+                        Logout
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    </nav>
+    {% endwith %}
+</div>
+
+<!-- Logout Confirmation Modal -->
+
+<div class="modal fade" id="logoutModalMobile" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header border-0 d-flex align-items-center gap-2">
+            <span class="material-icons text-danger bg-danger-subtle p-2 rounded-circle">
+            logout
+        </span>
+            
+            <h5 class="modal-title mb-0" id="logoutModalLabel">
+                Confirm Logout
+            </h5>
+
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        Are you sure you want to logout? You will be redirected to the login page.
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="{% url 'admin_logout' %}" class="btn btn-danger">Logout</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Navigation css -->
+<link rel="stylesheet" href="{% static 'css/mobile_nav.css' %}">
+
+{% block extra_js %}
+<!-- Mobile Navigation js -->
+<script src="{% static 'js/mobile_nav.js' %}"></script>
+<script>
+function toggleMoreMenu() {
+    document.getElementById("moreMenu").classList.toggle("hidden");
+}
+
+// Close on outside tap
+document.addEventListener("click", function (e) {
+    const menu = document.getElementById("moreMenu");
+    if (!e.target.closest("button") && !e.target.closest("#moreMenu")) {
+        menu.classList.add("hidden");
+    }
+});
+</script>
+
+{% endblock %}
+</body>
+</html>

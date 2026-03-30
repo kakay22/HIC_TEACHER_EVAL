@@ -1,0 +1,76 @@
+{% extends 'admins/base.html' %}
+
+{% block title %}Teacher Details{% endblock %}
+{% block page_title %}Teacher Details{% endblock %}
+
+{% block content %}
+<div class="flex flex-col min-h-screen bg-gray-100 p-4 md:p-6">
+
+    <!-- ================= TEACHER HEADER ================= -->
+<div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-6 flex flex-row flex-wrap items-center justify-between gap-4">
+    
+    <!-- Avatar + Name -->
+    <div class="flex items-center gap-4 flex-1 min-w-[220px]">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow-md">
+            {{ teacher.first_name|slice:":1" }}{{ teacher.last_name|slice:":1" }}
+        </div>
+        <div class="truncate">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900 truncate">{{ teacher.first_name }} {{ teacher.last_name }}</h1>
+            <p class="text-sm text-gray-500 truncate">
+                {{ teacher.course.name }} - {{ teacher.subject.name }} | {{ teacher.semester }}, {{ teacher.academic_year }}
+            </p>
+        </div>
+    </div>
+
+        <!-- Statistics -->
+        <div class="flex flex-wrap gap-3 justify-end flex-1 min-w-[220px]">
+            <div class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-center flex-1 min-w-[120px]">
+                <p class="text-xs font-medium text-gray-400 uppercase">Total Evaluations</p>
+                <p class="text-lg font-semibold text-gray-900 mt-1">{{ teacher.evaluations.count }}</p>
+            </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-center flex-1 min-w-[120px]">
+                <p class="text-xs font-medium text-gray-400 uppercase">Average Rating</p>
+                <p class="text-lg font-semibold text-gray-900 mt-1">{{ avg_rating }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= EVALUATIONS TABLE ================= -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-gray-500 uppercase tracking-wider">Student</th>
+                    <th class="px-6 py-3 text-left text-gray-500 uppercase tracking-wider">Subject</th>
+                    <th class="px-6 py-3 text-left text-gray-500 uppercase tracking-wider">Semester</th>
+                    <th class="px-6 py-3 text-left text-gray-500 uppercase tracking-wider">Date Submitted</th>
+                    <th class="px-6 py-3 text-left text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for eval in teacher.evaluations.all %}
+                <tr class="hover:bg-blue-50 transition-colors">
+                    <td class="px-6 py-3 font-medium text-gray-900">{{ eval.student_id }}</td>
+                    <td class="px-6 py-3 text-gray-700">{{ eval.subject.name }}</td>
+                    <td class="px-6 py-3 text-gray-700">{{ eval.semester }}</td>
+                    <td class="px-6 py-3 text-gray-500">{{ eval.submitted_at|date:"M d, Y H:i" }}</td>
+                    <td class="px-6 py-3">
+                        <a href="{% url 'evaluation_detail' eval.id %}" 
+                           class="text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                           View
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-400">
+                        No evaluations submitted yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

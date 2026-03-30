@@ -1,0 +1,488 @@
+{% load static %}
+{% load form_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'HIC_LOGO_TRANSPARENT.png' %}" type="image/png">
+    <title>Student Evaluation of Teachers</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="{% static 'js/home/dark_theme.js' %}"></script>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Include external CSS & JS -->
+    <link href="{% static 'css/home/select2-dark.css' %}" rel="stylesheet">
+    <script src="{% static 'js/home/select2-dark.js' %}"></script>
+
+    <style>
+        #themeIcon{
+            transition: transform .3s ease;
+        }
+
+        button:active #themeIcon{
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100 md:py-10">
+
+<div class="max-w-5xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 md:p-8 relative">
+
+    <!-- Top Right Actions -->
+    <div class="flex w-full justify-between text-xs text-gray-500">
+
+        <button onclick="toggleTheme()" class="btn btn-sm btn-outline-secondary">
+            <span id="themeIcon" class="material-icons">dark_mode</span>
+        </button>
+
+        <a href="{% url 'admin_login' %}" class="btn btn-sm btn-outline-secondary">
+            <span class="material-icons">settings</span>
+        </a>
+
+
+    </div>
+
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 text-center sm:text-left">
+        
+        <!-- Logo -->
+        <div class="flex-shrink-0">
+            <img src="{% static 'HIC_LOGO_TRANSPARENT.png' %}" alt="College Logo" class="h-16 w-auto mx-auto sm:mx-0 bg-white rounded-full">
+        </div>
+
+        <!-- Text -->
+        <div class="text-sm">
+            <p class="font-semibold">HOLY INFANT COLLEGE OF TACLOBAN CITY, INC.</p>
+            <p>Benigno Aquino Ave., Utap Hills, Tacloban City</p>
+            <p class="italic">Administered by the Religious Sisters of Mercy (RSM)</p>
+        </div>
+
+    </div>
+
+    <h2 class="text-xl font-bold text-center mt-6 mb-8">
+        STUDENT’S EVALUATION OF TEACHERS
+    </h2>
+
+    <div class="max-w-5xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 mb-6 border border-gray-200 dark:border-gray-700">
+        <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            This student evaluation form is part of our regular effort to maintain quality education.
+            Our faculty use your responses to these questions to become better teachers. 
+            We take your answers seriously and rest assured 
+            <span class="font-semibold text-gray-900 dark:text-white">
+                all your answers will be kept confidential
+            </span>. 
+            We hope you will also take them seriously.
+        </p>
+    </div>
+
+    <!-- Duplicate Evaluation Warning -->
+    <div id="duplicateWarning"
+        class="hidden flex items-center gap-2 text-sm text-red-600 mt-2 mb-4 p-3 border border-red-400 bg-red-100 rounded relative">
+
+        <!-- Help Icon -->
+        <span id="duplicateHelpBtn"
+            class="material-icons cursor-pointer text-red-600 hover:text-red-800 select-none">
+            help_outline
+        </span>
+
+        <!-- Warning Text -->
+        <span class="font-medium">Duplicate evaluation detected</span>
+
+        <!-- Tooltip -->
+        <div id="duplicateTooltip"
+            class="hidden absolute left-6 top-10 w-64 bg-white text-gray-700 text-xs border border-gray-200 shadow-xl rounded-lg p-3 z-50 pointer-events-auto">
+            <div class="absolute -top-2 left-3 w-4 h-4 bg-white border-l border-t border-gray-200 rotate-45"></div>
+            This student already submitted an evaluation for the selected teacher, subject, semester, and academic year.
+        </div>
+
+    </div>
+
+    <script src="{% static 'js/home/clickable_warning.js' %}"></script>
+
+    <!-- Form Start -->
+    <form method="POST" action="">
+        {% csrf_token %}
+
+        <!-- ================= TEACHER & STUDENT INFO FORM ================= -->
+<div class="space-y-6">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <!-- Teacher -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Teacher <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="teacher"
+                id="teacherSelect"
+                data-ajax-url="{% url 'teacher_list_json' %}"
+                required
+                class="w-full rounded-lg p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 focus:outline-none appearance-none text-gray-700 dark:text-gray-200"
+            ></select>
+        </div>
+
+        <!-- Subject -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Subject <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="subject"
+                required
+                class="w-full rounded-lg p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 focus:outline-none appearance-none text-gray-700 dark:text-gray-200"
+            >
+                <option value="" disabled selected class="text-gray-400">Select subject</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}" {% if request.POST.subject == subject.id|stringformat:"s" %}selected{% endif %}>
+                        {{ subject.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Semester -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Semester <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="semester"
+                required
+                class="w-full rounded-lg p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 focus:outline-none appearance-none"
+            >
+                <option value="" disabled selected class="text-gray-400">Select semester</option>
+                <option value="1st" {% if request.POST.semester == "1st" %}selected{% endif %}>1st Semester</option>
+                <option value="2nd" {% if request.POST.semester == "2nd" %}selected{% endif %}>2nd Semester</option>
+            </select>
+        </div>
+
+        <!-- Academic Year -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Academic Year <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="academic_year"
+                required
+                class="w-full rounded-lg p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 focus:outline-none appearance-none"
+            >
+                <option value="" disabled selected class="text-gray-400">Select academic year</option>
+                {% for year in years %}
+                    <option value="{{ year }}" {% if request.POST.academic_year == year|stringformat:"s" %}selected{% endif %}>
+                        {{ year }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Student Name -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Student Name
+            </label>
+            <input 
+                type="text"
+                name="student_name"
+                value="{{ request.POST.student_name }}"
+                placeholder="Optional"
+                class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none placeholder-gray-400"
+            >
+        </div>
+
+        <!-- Student ID -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Student ID <span class="text-red-500">*</span>
+            </label>
+
+            <div class="relative">
+
+                <input 
+                    type="text"
+                    name="student_id"
+                    id="student_id"
+                    value="{{ request.POST.student_id }}"
+                    placeholder="Enter student ID"
+                    required
+                    class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:outline-none placeholder-gray-400"
+                >
+
+                <!-- Validation Message -->
+                <div id="studentIdWarning"
+                    class="hidden absolute left-0 top-full mt-1 text-sm text-red-600 flex items-center gap-1 bg-white dark:bg-gray-800 px-2 py-1 z-10">
+                    <span class="material-icons text-red-500 text-base">error_outline</span>
+                    <span>Invalid Student ID</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Course -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Course <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="course"
+                required
+                class="w-full rounded-lg p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 focus:outline-none appearance-none"
+            >
+                <option value="" disabled selected class="text-gray-400">Select course</option>
+                {% for course in courses %}
+                    <option value="{{ course.id }}" {% if request.POST.course == course.id|stringformat:"s" %}selected{% endif %}>
+                        {{ course.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Year Level -->
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Year Level <span class="text-red-500">*</span>
+            </label>
+            <select 
+                name="year_level"
+                required
+                class="w-full rounded-lg p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 focus:outline-none appearance-none"
+            >
+                <option value="" disabled selected class="text-gray-400">Select year level</option>
+                {% for level in year_levels %}
+                    <option value="{{ level }}" {% if request.POST.year_level == level|stringformat:"s" %}selected{% endif %}>
+                        {{ level }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+    </div>
+
+</div>
+
+        <!-- ================= EVALUATION QUESTIONS ================= -->
+
+
+        <!-- Scale Info -->
+        <div class="mb-6 mt-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner overflow-x-auto">
+            <p class="font-semibold dark:text-gray-200 text-gray-700 mb-2">Scale:</p>
+            <div class="flex flex-wrap gap-2 text-xs sm:text-sm font-medium">
+                <span class="px-3 py-1 rounded-full bg-green-100 text-green-800">5 – Outstanding</span>
+                <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-800">4 – Good</span>
+                <span class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800">3 – Average</span>
+                <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-800">2 – Needs Improvement</span>
+                <span class="px-3 py-1 rounded-full bg-red-100 text-red-800">1 – Unsatisfactory</span>
+                <span class="px-3 py-1 rounded-full bg-gray-200 text-gray-700">N – Not Observed</span>
+            </div>
+        </div>
+
+        <!-- Evaluation Sections -->
+        {% for section in sections %}
+        <div class="mb-8">
+            <h3 class="font-semibold mb-2">{{ section.prefix }}.{{ section.title }}</h3>
+
+            <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+<table class="w-full text-sm border-collapse min-w-[720px]">
+
+    <!-- HEADER -->
+    <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+        <tr>
+            <th class="p-3 text-left w-[50%]">Item</th>
+            <th class="p-3 text-center w-12">5</th>
+            <th class="p-3 text-center w-12">4</th>
+            <th class="p-3 text-center w-12">3</th>
+            <th class="p-3 text-center w-12">2</th>
+            <th class="p-3 text-center w-12">1</th>
+            <th class="p-3 text-center w-12">N</th>
+        </tr>
+    </thead>
+
+    <!-- BODY -->
+    <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+
+    {% for q in section.questions.all %}
+    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+
+        <!-- Question Column -->
+        <td class="p-3 whitespace-normal break-words max-w-[320px]">
+            {{ forloop.counter }}. {{ q.text }}
+        </td>
+
+        {% for v in "54321N" %}
+        <td class="text-center p-3">
+            <input
+                type="radio"
+                name="q_{{ section.prefix }}_{{ forloop.parentloop.counter }}"
+                value="{{ v }}"
+                data-section="{{ section.prefix }}"
+                required
+                class="w-5 h-5 accent-blue-600 cursor-pointer">
+        </td>
+        {% endfor %}
+
+    </tr>
+    {% endfor %}
+
+    <!-- TOTAL ROW -->
+    <tr class="bg-gray-100 dark:bg-gray-700 font-semibold">
+        <td class="p-3 text-right">
+            TOTAL
+        </td>
+        <td colspan="6" class="text-center p-3 text-blue-600 font-bold text-lg">
+            <span id="total_{{ section.prefix }}">0</span>
+        </td>
+    </tr>
+
+    </tbody>
+</table>
+</div>
+
+        </div>
+        {% endfor %}
+
+        <!-- Additional Comments -->
+        <div class="mb-8 space-y-4">
+            <label class="block font-semibold text-gray-700 dark:text-gray-200">A. Commendable Features</label>
+            <textarea name="commendable_features" rows="4" class="w-full border p-2 rounded-md dark:bg-gray-700" placeholder="Enter commendable features observed...">{{ request.POST.commendable_features }}</textarea>
+
+            <label class="block font-semibold text-gray-700 dark:text-gray-200">B. Suggestions for Improvement (especially for '1' answers)</label>
+            <textarea name="suggestions_improvement" rows="4" class="w-full border p-2 rounded-md dark:bg-gray-700" placeholder="Enter suggestions for improvement...">{{ request.POST.suggestions_improvement }}</textarea>
+        </div>
+
+        <!-- Submit + Clear Buttons -->
+        <div class="mt-8 flex justify-center gap-3">
+
+            <!-- Submit -->
+            <button type="submit"
+                class="inline-flex items-center gap-2 px-6 py-2.5
+                    bg-blue-600 text-white text-sm font-medium
+                    rounded-lg shadow-sm
+                    hover:bg-blue-700
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                    transition">
+
+                <span class="material-icons text-[18px]">send</span>
+                Submit Evaluation
+            </button>
+
+            <!-- Clear -->
+            <button type="button" id="clearBtn"
+                class="inline-flex items-center gap-2 px-6 py-2.5
+                    bg-white text-gray-700 text-sm font-medium
+                    border border-gray-300
+                    rounded-lg shadow-sm
+                    hover:bg-gray-100
+                    focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
+                    transition">
+
+                <span class="material-icons text-[18px]">restart_alt</span>
+                Clear
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<!-- TOTAL CALCULATION SCRIPT -->
+<script src="{% static 'js/home/total_calculation.js' %}"></script>
+
+<!-- DUPLICATE CHECK SCRIPT -->
+<script src="{% static 'js/home/duplicate_check.js' %}"></script>
+
+<!-- Clear Confirmation Modal -->
+<div id="clearModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-6">
+
+        <!-- Icon + Title -->
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-icons text-red-500 text-2xl">warning</span>
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                Clear Form?
+            </h2>
+        </div>
+
+        <!-- Message -->
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            This will remove all your inputs. This action cannot be undone.
+        </p>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-2">
+
+            <button id="cancelClear"
+                class="px-4 py-2 text-sm rounded-lg
+                       bg-gray-200 dark:bg-gray-700
+                       text-gray-700 dark:text-gray-300
+                       hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                Cancel
+            </button>
+
+            <button id="confirmClear"
+                class="px-4 py-2 text-sm rounded-lg
+                       bg-red-600 text-white
+                       hover:bg-red-700 transition">
+                Yes, Clear
+            </button>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const clearBtn = document.getElementById('clearBtn');
+    const modal = document.getElementById('clearModal');
+    const cancelBtn = document.getElementById('cancelClear');
+    const confirmBtn = document.getElementById('confirmClear');
+    const form = document.querySelector('form');
+
+    // Open modal
+    clearBtn.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    });
+
+    // Cancel
+    cancelBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    });
+
+    // Confirm clear
+    confirmBtn.addEventListener('click', () => {
+        form.reset();
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    });
+
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    });
+});
+</script>
+
+</body>
+</html>

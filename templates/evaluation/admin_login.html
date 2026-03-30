@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{% static 'js/home/dark_theme.js' %}"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        .login-card {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 transition-colors duration-300">
+
+<!-- Login Card -->
+<div class="login-card w-full max-w-md bg-white dark:bg-gray-800 
+            rounded-2xl shadow-sm p-8 sm:p-10 
+            border border-gray-200 dark:border-gray-700">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <div class="mx-auto mb-4 w-12 h-12 flex items-center justify-center 
+                    rounded-full bg-gray-100 dark:bg-gray-700">
+            <span class="material-icons text-gray-700 dark:text-gray-200 text-xl">
+                admin_panel_settings
+            </span>
+        </div>
+
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+            Admin Login
+        </h1>
+
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Secure access to the dashboard
+        </p>
+    </div>
+
+    <!-- Error Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+                <div class="mb-5 rounded-lg bg-red-50 dark:bg-red-900/20 
+                            border border-red-200 dark:border-red-800 
+                            text-red-600 dark:text-red-300 
+                            text-sm px-4 py-2">
+                    {{ message }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <!-- Login Form -->
+    <form id="loginForm" method="POST" class="space-y-5">
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div>
+            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Username</label>
+            <div class="relative">
+                <input type="text" name="username" required
+                        value="{{ username|default:'' }}"
+                       class="w-full rounded-lg border border-gray-300 dark:border-gray-600
+                              bg-white dark:bg-gray-700
+                              text-gray-800 dark:text-gray-100
+                              px-4 py-2.5 text-sm
+                              focus:outline-none focus:ring-2 focus:ring-black focus:border-black
+                              placeholder-gray-400 dark:placeholder-gray-500">
+                <span class="absolute right-3 top-2.5 text-gray-400 dark:text-gray-500">
+                    <span class="material-icons text-base">person</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Password -->
+        <div>
+            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Password</label>
+            <div class="relative">
+                <input type="password" name="password" id="password" required
+                       class="w-full rounded-lg border border-gray-300 dark:border-gray-600
+                              bg-white dark:bg-gray-700
+                              text-gray-800 dark:text-gray-100
+                              px-4 py-2.5 text-sm pr-10
+                              focus:outline-none focus:ring-2 focus:ring-black focus:border-black
+                              placeholder-gray-400 dark:placeholder-gray-500">
+                <button type="button"
+                        onclick="togglePassword()"
+                        class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                    <span id="eyeIcon" class="material-icons text-base">visibility</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Remember Me & Theme Toggle -->
+        <div class="flex items-center justify-between text-sm">
+            <label class="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" name="remember" id="remember"
+                    class="peer hidden">
+
+                <!-- Custom checkbox -->
+                <div class="w-5 h-5 flex items-center justify-center 
+                            rounded-md border border-gray-300 dark:border-gray-600
+                            bg-white dark:bg-gray-700
+                            peer-checked:bg-black peer-checked:border-black
+                            transition-all duration-200">
+
+                    <span class="material-icons text-white text-sm opacity-0 peer-checked:opacity-100">
+                        check
+                    </span>
+                </div>
+
+                <span class="text-sm text-gray-600 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white transition">
+                    Remember me
+                </span>
+            </label>
+
+            <!-- ⚠️ THEME TOGGLE UNCHANGED -->
+            <button type="button"
+                    onclick="toggleTheme()"
+                    class="flex items-center gap-2 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white transition px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                <span class="material-icons text-base">dark_mode</span>
+                <span class="hidden sm:inline">Theme</span>
+            </button>
+        </div>
+
+        <!-- Login Button -->
+        <button id="loginBtn" type="submit"
+                class="w-full flex items-center justify-center gap-2
+                       bg-black text-white font-medium py-2.5 rounded-lg
+                       hover:bg-gray-900 transition">
+
+            <span id="loginText" class="flex items-center gap-2">
+                <span class="material-icons text-base">login</span>
+                <span>Sign in</span>
+            </span>
+
+            <span id="spinner" class="hidden animate-spin material-icons text-base">
+                autorenew
+            </span>
+        </button>
+    </form>
+
+    <!-- Footer -->
+    <div class="mt-6 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+        <a href="{% url 'admin_forgot_password' %}" class="hover:text-black dark:hover:text-white transition">
+            Forgot password?
+        </a>
+
+        <a href="{% url 'home' %}" class="hover:text-black dark:hover:text-white transition">
+            Home
+        </a>
+    </div>
+</div>
+
+<!-- ✅ ALL YOUR ORIGINAL SCRIPTS KEPT EXACTLY -->
+<script>
+function togglePassword() {
+    const input = document.getElementById('password');
+    const icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+    } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+    }
+}
+
+function toggleTheme() {
+    document.documentElement.classList.toggle('dark');
+    const isDark = document.documentElement.classList.contains('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const loginText = document.getElementById('loginText');
+    const spinner = document.getElementById('spinner');
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            if (loginBtn.disabled) return;
+
+            loginText.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            loginBtn.disabled = true;
+
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    loginForm.submit();
+                }, 120);
+            });
+        });
+    }
+});
+
+// Load remember state
+document.addEventListener('DOMContentLoaded', function () {
+    const remember = document.getElementById('remember');
+
+    if (localStorage.getItem('remember') === 'true') {
+        remember.checked = true;
+    }
+
+    remember.addEventListener('change', function () {
+        localStorage.setItem('remember', remember.checked);
+    });
+});
+</script>
+
+</body>
+</html>
