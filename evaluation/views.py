@@ -429,11 +429,17 @@ from .models import TeacherEvaluation, Teacher, Subject
 from django.db.models import F
 
 
+from django.shortcuts import render
+from django.db.models import Q
+from django.core.paginator import Paginator
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from .models import TeacherEvaluation, Teacher, Subject
+
 @login_required(login_url='admin_login')
 def evaluations_list(request):
     # ===================== QUERYSET =====================
-    qs = TeacherEvaluation.objects.select_related('teacher', 'subject', 'course')\
-        .prefetch_related('items')
+    qs = TeacherEvaluation.objects.select_related('teacher', 'subject', 'course').prefetch_related('items')
 
     # ===================== FILTERS =====================
     teacher_id = request.GET.get('teacher')
@@ -450,22 +456,6 @@ def evaluations_list(request):
     if semester:
         qs = qs.filter(semester=semester)
 
-    for e in qs:
-        if e.overall_rating:
-            rating = e.overall_rating
-            filled = int(rating)                    # full stars
-            half = 1 if (rating - int(rating)) >= 0.5 else 0
-            empty = 5 - filled - half
-        else:
-            filled = 0
-            half = 0
-            empty = 5
-
-        # Precompute lists for template iteration
-        e.filled_stars_list = range(filled)
-        e.half_star_list = range(half)
-        e.empty_stars_list = range(empty)
-
     # ===================== SEARCH =====================
     if search:
         qs = qs.filter(
@@ -474,23 +464,45 @@ def evaluations_list(request):
             Q(subject__name__icontains=search)
         )
 
+    # ===================== UPDATE OVERALL_RATING (BULK) =====================
+    updates = []
+    for e in qs:
+        # Assign overall_rating from computed value
+        if hasattr(e, 'overall_computed_rating') and e.overall_computed_rating is not None:
+            e.overall_rating = e.overall_computed_rating
+
+        # Compute stars for template
+        rating = e.overall_rating or 0
+        filled = int(rating)
+        half = 1 if (rating - filled) >= 0.5 else 0
+        empty = 5 - filled - half
+
+        e.filled_stars_list = range(filled)
+        e.half_star_list = range(half)
+        e.empty_stars_list = range(empty)
+
+        updates.append(e)
+
+    # Bulk update overall_rating in DB
+    if updates:
+        TeacherEvaluation.objects.bulk_update(updates, ['overall_rating'])
+
     # ===================== SORT =====================
     if sort == "date_desc":
         qs = qs.order_by('-submitted_at')
     elif sort == "date_asc":
         qs = qs.order_by('submitted_at')
     elif sort == "rating_desc":
-        qs = sorted(qs, key=lambda e: (e.overall_computed_rating or 0), reverse=True)
+        qs = sorted(qs, key=lambda x: (getattr(x, 'overall_computed_rating', 0) or 0), reverse=True)
     elif sort == "rating_asc":
-        qs = sorted(qs, key=lambda e: (e.overall_computed_rating or 0))
+        qs = sorted(qs, key=lambda x: (getattr(x, 'overall_computed_rating', 0) or 0))
 
     # ===================== EXPORT =====================
     if export in ["excel", "pdf"]:
-        # Precompute numeric rating for export (ignores "N")
         for e in qs:
             ratings = []
             for item in e.items.all():
-                value = str(item.rating).strip().upper()
+                value = str(getattr(item, 'rating', '')).strip().upper()
                 if value == "N":
                     continue
                 try:
@@ -603,9 +615,6 @@ def evaluations_list(request):
         'search': search or '',
         'sort': sort or '',
     }
-
-    e.overall_rating = e.overall_computed_rating
-    e.save()
 
     return render(request, 'admins/evaluations.html', context)
 

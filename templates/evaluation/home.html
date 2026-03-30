@@ -447,42 +447,7 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const clearBtn = document.getElementById('clearBtn');
-    const modal = document.getElementById('clearModal');
-    const cancelBtn = document.getElementById('cancelClear');
-    const confirmBtn = document.getElementById('confirmClear');
-    const form = document.querySelector('form');
-
-    // Open modal
-    clearBtn.addEventListener('click', () => {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    });
-
-    // Cancel
-    cancelBtn.addEventListener('click', () => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    });
-
-    // Confirm clear
-    confirmBtn.addEventListener('click', () => {
-        form.reset();
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    });
-
-    // Click outside to close
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-    });
-});
-</script>
+<script src="{% static 'js/home/clear_form.js' %}"></script>
 
 </body>
 </html>

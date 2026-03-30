@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Section, Question, Teacher, Course, Subject, TeacherEvaluation, EvaluationItem
+from .models import Section, Question, Teacher, Course, Subject, TeacherEvaluation, EvaluationItem, Student
 
 # Inline to add questions inside Section
 class QuestionInline(admin.TabularInline):
@@ -121,3 +121,9 @@ class EvaluationItemAdmin(admin.ModelAdmin):
     def get_subject(self, obj):
         return obj.evaluation.teacher.subject.name if obj.evaluation.teacher.subject else '-'
     get_subject.short_description = 'Subject'
+
+# ---------- Student Admin ----------
+@admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ['student_id']
+    search_fields = ['student_id']
