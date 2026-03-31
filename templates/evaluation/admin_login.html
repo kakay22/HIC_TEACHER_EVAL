@@ -91,6 +91,7 @@
             <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Password</label>
             <div class="relative">
                 <input type="password" name="password" id="password" required
+                        value="{{ password|default:'' }}"
                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600
                               bg-white dark:bg-gray-700
                               text-gray-800 dark:text-gray-100
@@ -155,10 +156,7 @@
     </form>
 
     <!-- Footer -->
-    <div class="mt-6 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-        <a href="{% url 'admin_forgot_password' %}" class="hover:text-black dark:hover:text-white transition">
-            Forgot password?
-        </a>
+    <div class="mt-6 flex items-center justify-end text-sm text-gray-500 dark:text-gray-400">
 
         <a href="{% url 'home' %}" class="hover:text-black dark:hover:text-white transition">
             Home

@@ -6,12 +6,12 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <style>
-body { background-color: #f4f6f9; }
+body { background-color: #f4f6f9; font-family: 'Inter', sans-serif; }
 
 .dashboard-card {
     background: #fff;
-    border-radius: .75rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,.05);
+    border-radius: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
 }
 
 .table thead th {
@@ -19,35 +19,39 @@ body { background-color: #f4f6f9; }
     font-weight: 600;
 }
 
-.dropdown-toggle::after {
-    display: none;
+.dropdown-toggle::after { display: none; }
+
+.teacher-card {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    padding: 1rem;
+    margin-bottom: 1rem;
 }
-@media (max-width: 768px) {
-    .mobile-card-scroll {
-        max-height: calc(100vh - 180px); /* adjust if you have navbar/footer */
-        overflow-y: auto;
-        padding-right: 4px;
-    }
 
-    /* Smooth scrolling */
-    .mobile-card-scroll {
-        -webkit-overflow-scrolling: touch;
-    }
+.teacher-card h6 { font-size: 1rem; }
 
-    /* Subtle scrollbar (modern browsers) */
-    .mobile-card-scroll::-webkit-scrollbar {
-        width: 4px;
-    }
-
-    .mobile-card-scroll::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
-    }
-
-    .mobile-card-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
+.teacher-card .dropdown-menu {
+    min-width: 160px;
 }
+
+.mobile-card-scroll {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mobile-card-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.mobile-card-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+.mobile-card-scroll::-webkit-scrollbar-track { background: transparent; }
+
+.text-muted-icon { display: flex; flex-direction: column; align-items: center; color: #6c757d; margin-top: 2rem; }
+.text-muted-icon .material-icons { font-size: 48px; }
 </style>
 {% endblock %}
 
@@ -55,182 +59,109 @@ body { background-color: #f4f6f9; }
 <div class="container-fluid py-4">
 
     <!-- Header -->
-    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-        <h2 class="h4 mb-0">Faculty</h2>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold text-2xl mb-1">Faculty</h2>
+            <p class="text-sm text-gray-500">Manage and review all faculty members</p>
+        </div>
 
-        <div class="d-flex gap-2 align-items-center">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
 
-        <form method="GET" class="flex-grow-1">
-            <div class="input-group">
+            <!-- Search -->
+            <form method="GET" class="flex-grow-1">
+                <div class="input-group">
+                    <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search teacher...">
+                    <button class="btn btn-primary" type="submit">
+                        <span class="material-icons" style="font-size:18px;">search</span>
+                    </button>
+                </div>
+            </form>
 
-                <input 
-                    type="text"
-                    name="q"
-                    value="{{ request.GET.q }}"
-                    class="form-control"
-                    placeholder="Search teacher..."
-                >
-
-                <button class="btn btn-primary" type="submit">
-                    <span class="material-icons" style="font-size:18px;">search</span>
-                </button>
-
-            </div>
-        </form>
-
-        <button class="btn btn-success d-flex align-items-center"
-            data-bs-toggle="modal"
-            data-bs-target="#addTeacherModal">
-            <span class="material-icons">add</span>
-        </button>
-
+            <!-- Add Button -->
+            <button class="btn btn-success d-flex align-items-center"
+                data-bs-toggle="modal" data-bs-target="#addTeacherModal">
+                <span class="material-icons">add</span>
+            </button>
+        </div>
     </div>
-</div>
 
-<!--desktop-->
+    <!-- Desktop Table -->
+    <div class="dashboard-card p-0 d-none d-md-block">
+        <div class="table-responsive rounded-2xl">
+            <table class="table table-hover align-middle mb-0 text-nowrap">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if teachers %}
+                        {% for teacher in teachers %}
+                            {% if teacher.id %}
+                            <tr>
+                                <td>{{ teacher.first_name }} {{ teacher.last_name }}</td>
+                                <td class="text-center">
+                                    <div class="dropdown" data-bs-display="static">
+                                        <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                            <span class="material-icons">more_vert</span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a href="{% url 'teacher_detail' teacher.id %}" class="dropdown-item">View Details</a></li>
+                                            <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTeacherModal{{ teacher.id }}">Edit</button></li>
+                                            <li><button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal{{ teacher.id }}">Delete</button></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center py-4 text-muted">
+                                <span class="material-icons" style="vertical-align:middle;">info</span>
+                                No teachers found.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-<div class="dashboard-card p-0 d-none d-md-block">
-    <div class="table-responsive rounded-2xl">
-        <table class="table table-hover align-middle mb-0 text-nowrap">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Subject</th>
-                    <th>Course</th>
-                    <th>Semester</th>
-                    <th>Academic Year</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+    <!-- Mobile List -->
+    <div class="d-block d-md-none mobile-card-scroll">
+        {% if teachers %}
             {% for teacher in teachers %}
-                <tr>
-                    <td>{{ teacher.first_name }} {{ teacher.last_name }}</td>
-                    <td>{{ teacher.subject.name }}</td>
-                    <td>{{ teacher.course.name }}</td>
-                    <td>{{ teacher.semester }}</td>
-                    <td>{{ teacher.academic_year }}</td>
-                    <td class="text-center">
-                        <div class="dropdown" data-bs-display="static">
-                            <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" data-bs-display="static">
-                                <span class="material-icons">more_vert</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a href="{% url 'teacher_detail' teacher.id %}" class="dropdown-item">
-                                        View Details
-                                    </a>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item" data-bs-toggle="modal"
-                                            data-bs-target="#editTeacherModal{{ teacher.id }}">
-                                        Edit
-                                    </button>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item text-danger" data-bs-toggle="modal"
-                                            data-bs-target="#confirmDeleteTeacherModal{{ teacher.id }}">
-                                        Delete
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
+                {% if teacher.id %}
+                <div class="teacher-card d-flex justify-content-between align-items-start">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="material-icons text-primary" style="font-size:20px;">person</span>
+                        <h6 class="fw-semibold mb-0">{{ teacher.first_name }} {{ teacher.last_name }}</h6>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light rounded-circle p-1" data-bs-toggle="dropdown">
+                            <span class="material-icons">more_vert</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                            <li><a href="{% url 'teacher_detail' teacher.id %}" class="dropdown-item d-flex align-items-center gap-2">
+                                <span class="material-icons" style="font-size:18px;">visibility</span> View Details</a></li>
+                            <li><button class="dropdown-item d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#editTeacherModal{{ teacher.id }}">
+                                <span class="material-icons" style="font-size:18px;">edit</span> Edit</button></li>
+                            <li><button class="dropdown-item text-danger d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal{{ teacher.id }}">
+                                <span class="material-icons" style="font-size:18px;">delete</span> Delete</button></li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
             {% endfor %}
-            </tbody>
-        </table>
+        {% else %}
+            <div class="text-muted-icon">
+                <span class="material-icons">info</span>
+                <p class="mt-2 mb-0">No teachers found.</p>
+            </div>
+        {% endif %}
     </div>
-</div>
-
-<!-- Mobile List -->
-<div class="d-block d-md-none mobile-card-scroll">
-    {% for teacher in teachers %}
-    <div class="card mb-3 shadow-sm border-0 rounded-4">
-    <div class="card-body p-3">
-
-        <!-- Top Section -->
-        <div class="d-flex justify-content-between align-items-start">
-
-            <!-- Name + Course -->
-            <div>
-                <h6 class="fw-semibold mb-1 d-flex align-items-center gap-2">
-                    <span class="material-icons text-primary" style="font-size:20px;">
-                        person
-                    </span>
-                    {{ teacher.first_name }} {{ teacher.last_name }}
-                </h6>
-
-                <small class="text-muted d-flex align-items-center gap-1">
-                    <span class="material-icons" style="font-size:16px;">school</span>
-                    {{ teacher.course.name }}
-                </small>
-            </div>
-
-            <!-- Dropdown -->
-            <div class="dropdown">
-                <button class="btn btn-sm btn-light rounded-circle p-1"
-                        data-bs-toggle="dropdown">
-                    <span class="material-icons">more_vert</span>
-                </button>
-
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
-                    <li>
-                        <a href="{% url 'teacher_detail' teacher.id %}" class="dropdown-item d-flex align-items-center gap-2">
-                            <span class="material-icons" style="font-size:18px;">visibility</span>
-                            View Details
-                        </a>
-                    </li>
-
-                    <li>
-                        <button class="dropdown-item d-flex align-items-center gap-2"
-                                data-bs-toggle="modal"
-                                data-bs-target="#editTeacherModal{{ teacher.id }}">
-                            <span class="material-icons" style="font-size:18px;">edit</span>
-                            Edit
-                        </button>
-                    </li>
-
-                    <li>
-                        <button class="dropdown-item text-danger d-flex align-items-center gap-2"
-                                data-bs-toggle="modal"
-                                data-bs-target="#confirmDeleteTeacherModal{{ teacher.id }}">
-                            <span class="material-icons" style="font-size:18px;">delete</span>
-                            Delete
-                        </button>
-                    </li>
-                </ul>
-            </div>
-
-        </div>
-
-        <!-- Divider -->
-        <hr class="my-3">
-
-        <!-- Info Section -->
-        <div class="small text-muted d-flex flex-column gap-2">
-
-            <div class="d-flex align-items-center gap-2">
-                <span class="material-icons text-secondary" style="font-size:18px;">menu_book</span>
-                <span><strong class="text-dark">Subject:</strong> {{ teacher.subject.name }}</span>
-            </div>
-
-            <div class="d-flex align-items-center gap-2">
-                <span class="material-icons text-secondary" style="font-size:18px;">calendar_month</span>
-                <span><strong class="text-dark">Semester:</strong> {{ teacher.semester }}</span>
-            </div>
-
-            <div class="d-flex align-items-center gap-2">
-                <span class="material-icons text-secondary" style="font-size:18px;">event</span>
-                <span><strong class="text-dark">Academic Year:</strong> {{ teacher.academic_year }}</span>
-            </div>
-
-        </div>
-
-    </div>
-</div>
-    {% endfor %}
-</div>
 </div>
 
 <!-- ================= ADD MODAL ================= -->
@@ -242,7 +173,6 @@ body { background-color: #f4f6f9; }
                 <h5 class="modal-title">Add Teacher</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
             <div class="modal-body">
                 <div class="row g-2">
                     <div class="col-6">
@@ -251,35 +181,8 @@ body { background-color: #f4f6f9; }
                     <div class="col-6">
                         <input name="last_name" class="form-control" placeholder="Last name" required>
                     </div>
-
-                    <div class="col-12">
-                        <select name="subject" class="form-select" required>
-                            <option value="" disabled selected>Select Subject</option>
-                            {% for s in subjects %}
-                                <option value="{{ s.id }}">{{ s.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="col-12">
-                        <select name="course" class="form-select" required>
-                            <option value="" disabled selected>Select Course</option>
-                            {% for c in courses %}
-                                <option value="{{ c.id }}">{{ c.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="col-6">
-                        <input name="semester" class="form-control" placeholder="Semester" required>
-                    </div>
-
-                    <div class="col-6">
-                        <input name="academic_year" class="form-control" placeholder="Academic Year" required>
-                    </div>
                 </div>
             </div>
-
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button class="btn btn-success">Save</button>
@@ -290,88 +193,57 @@ body { background-color: #f4f6f9; }
 
 <!-- ================= EDIT MODALS ================= -->
 {% for teacher in teachers %}
-<div class="modal fade" id="editTeacherModal{{ teacher.id }}">
-<div class="modal-dialog modal-dialog-centered">
-<form method="POST" action="{% url 'teacher_edit' teacher.id %}" class="modal-content">
-    {% csrf_token %}
-    <div class="modal-header">
-        <h5 class="modal-title">Edit Teacher</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-    </div>
-
-    <div class="modal-body">
-        <div class="row g-2">
-            <div class="col-6">
-                <input name="first_name" value="{{ teacher.first_name }}" class="form-control" required>
-            </div>
-            <div class="col-6">
-                <input name="last_name" value="{{ teacher.last_name }}" class="form-control" required>
-            </div>
-
-            <div class="col-12">
-                <select name="subject" class="form-select" required>
-                    {% for s in subjects %}
-                        <option value="{{ s.id }}" {% if s.id == teacher.subject.id %}selected{% endif %}>
-                            {{ s.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-12">
-                <select name="course" class="form-select" required>
-                    {% for c in courses %}
-                        <option value="{{ c.id }}" {% if c.id == teacher.course.id %}selected{% endif %}>
-                            {{ c.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-6">
-                <input name="semester" value="{{ teacher.semester }}" class="form-control" required>
-            </div>
-
-            <div class="col-6">
-                <input name="academic_year" value="{{ teacher.academic_year }}" class="form-control" required>
-            </div>
+    {% if teacher.id %}
+    <div class="modal fade" id="editTeacherModal{{ teacher.id }}">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" action="{% url 'teacher_edit' teacher.id %}" class="modal-content">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Teacher</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input name="first_name" value="{{ teacher.first_name }}" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <input name="last_name" value="{{ teacher.last_name }}" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary">Update</button>
+                </div>
+            </form>
         </div>
     </div>
-
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary">Update</button>
-    </div>
-</form>
-</div>
-</div>
+    {% endif %}
 {% endfor %}
 
 <!-- ================= CONFIRM DELETE MODALS ================= -->
 {% for teacher in teachers %}
-<div class="modal fade" id="confirmDeleteTeacherModal{{ teacher.id }}">
-<div class="modal-dialog modal-dialog-centered">
-<form method="POST" action="{% url 'teacher_delete' teacher.id %}" class="modal-content">
-    {% csrf_token %}
-    <div class="modal-header">
-        <h5 class="modal-title text-danger">Confirm Delete</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
+    {% if teacher.id %}
+    <div class="modal fade" id="confirmDeleteTeacherModal{{ teacher.id }}">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" action="{% url 'teacher_delete' teacher.id %}" class="modal-content">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Confirm Delete</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete <strong>{{ teacher.first_name }} {{ teacher.last_name }}</strong>?
+                    <br><small class="text-muted">This action cannot be undone.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </form>
+        </div>
     </div>
-
-    <div class="modal-body">
-        Are you sure you want to delete
-        <strong>{{ teacher.first_name }} {{ teacher.last_name }}</strong>?
-        <br>
-        <small class="text-muted">This action cannot be undone.</small>
-    </div>
-
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-danger">Yes, Delete</button>
-    </div>
-</form>
-</div>
-</div>
+    {% endif %}
 {% endfor %}
-
 {% endblock %}

@@ -265,11 +265,36 @@
                 class="w-full rounded-lg p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 focus:outline-none appearance-none"
             >
                 <option value="" disabled selected class="text-gray-400">Select year level</option>
-                {% for level in year_levels %}
-                    <option value="{{ level }}" {% if request.POST.year_level == level|stringformat:"s" %}selected{% endif %}>
-                        {{ level }}
-                    </option>
-                {% endfor %}
+
+                <optgroup label="Elementary">
+                    <option value="Kindergarten">Kindergarten</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
+                    <option value="Grade 6">Grade 6</option>
+                </optgroup>
+
+                <optgroup label="Junior High School">
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                </optgroup>
+
+                <optgroup label="Senior High School">
+                    <option value="Grade 11">Grade 11</option>
+                    <option value="Grade 12">Grade 12</option>
+                </optgroup>
+
+                <optgroup label="College">
+                    <option value="1st Year College">1st Year</option>
+                    <option value="2nd Year College">2nd Year</option>
+                    <option value="3rd Year College">3rd Year</option>
+                    <option value="4th Year College">4th Year</option>
+                    <option value="5th Year College">5th Year</option>
+                </optgroup>
             </select>
         </div>
 

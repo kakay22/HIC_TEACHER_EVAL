@@ -39,12 +39,8 @@ class Course(models.Model):
 
 # Teacher model
 class Teacher(models.Model):
-    first_name = models.CharField(max_length=50,null=True, blank=True)
-    last_name = models.CharField(max_length=50,null=True, blank=True)
-    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True)
-    semester = models.CharField(max_length=20)
-    academic_year = models.CharField(max_length=20)
+    first_name = models.CharField(max_length=50, null=True, blank=True)
+    last_name = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -72,7 +68,7 @@ class TeacherEvaluation(models.Model):
     )
     semester = models.CharField(max_length=20, blank=True)
     academic_year = models.CharField(max_length=20, blank=True)
-    year_level = models.CharField(max_length=10, blank=True)
+    year_level = models.CharField(max_length=20, blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     # ⭐ NEW FIELD
@@ -82,8 +78,14 @@ class TeacherEvaluation(models.Model):
     suggestions_improvement = models.TextField(blank=True, null=True)
 
     class Meta:
-        # Prevent multiple entries for the same teacher, student, subject, semester, and academic year
-        unique_together = ('teacher', 'student_id', 'subject', 'semester', 'academic_year')
+        unique_together = (
+            'teacher',
+            'student_id',
+            'subject',
+            'course',
+            'semester',
+            'academic_year'
+        )
 
    
     @property

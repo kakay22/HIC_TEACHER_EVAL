@@ -13,20 +13,26 @@ body {
     font-family: 'Inter', sans-serif;
 }
 
-/* Card & Table */
+/* Card style */
 .dashboard-card {
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-radius: 1rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
     transition: all 0.3s ease;
 }
+
+/* Table hover */
 .table-hover tbody tr:hover {
     background-color: #f1f3f5;
 }
 
-/* Actions buttons */
+/* Action buttons */
 .actions-btns .btn {
-    padding: .25rem .45rem;
+    padding: 0.35rem 0.55rem;
+    transition: all 0.2s;
+}
+.actions-btns .btn:hover {
+    transform: translateY(-1px);
 }
 
 /* Ghost Add Row */
@@ -35,43 +41,68 @@ body {
     color: #6c757d;
     border: 2px dashed #ced4da;
     text-align: center;
-    transition: all 0.2s ease;
-    padding: 12px 0;
-    border-radius: 8px; 
+    padding: 14px 0;
+    border-radius: 0.5rem;
     font-weight: 500;
+    transition: all 0.2s ease;
 }
 .add-ghost:hover {
     background-color: #f8f9fa;
     color: #198754;
     border-color: #198754;
 }
+
+/* Smooth inline inputs */
+input.form-control-sm {
+    border-radius: 0.4rem;
+    transition: all 0.2s ease;
+}
+input.form-control-sm:focus {
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+/* Responsive search */
+@media (max-width: 768px) {
+    .header-search {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid p-3">
+<div class="container-fluid py-2">
 
-    <!-- Header + Search -->
-    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4 align-items-center">
-        <h2 class="h4 mb-0">Courses</h2>
-        <form method="GET" class="d-flex gap-2">
-            <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search courses...">
-            <button class="btn btn-primary">
-                <span class="material-icons">search</span>
-            </button>
+    <!-- ================= HEADER + SEARCH ================= -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-3">
+
+        <div class="d-flex flex-column">
+            <h2 class="text-2xl fw-semibold mb-1">Courses</h2>
+            <p class="text-muted">Manage and review all available courses</p>
+        </div>
+
+        <!-- Search -->
+        <form method="GET" class="d-flex gap-2 header-search w-100 w-md-auto">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden">
+                <input type="text" name="q" value="{{ request.GET.q }}" class="form-control border-0" placeholder="Search courses..." style="min-width:220px;">
+                <button class="btn btn-primary d-flex align-items-center justify-content-center px-3">
+                    <span class="material-icons">search</span>
+                </button>
+            </div>
         </form>
     </div>
 
-    <!-- Courses Table -->
-    <div class="dashboard-card p-0">
+    <!-- ================= COURSES TABLE ================= -->
+    <div class="dashboard-card p-0 overflow-hidden">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 text-nowrap">
-                <thead>
+                <thead class="bg-light">
                     <tr>
-                        <th>#</th>
-                        <th>Course Name</th>
-                        <th>Course Code</th>
-                        <th class="text-center">Actions</th>
+                        <th class="text-muted">#</th>
+                        <th class="text-muted">Course Name</th>
+                        <th class="text-muted">Course Code</th>
+                        <th class="text-center text-muted">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,25 +129,16 @@ body {
                         <!-- Actions -->
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1 actions-btns">
-                                <!-- Edit button -->
                                 <button type="button" class="btn btn-outline-primary btn-sm view" onclick="toggleEditCourse({{ course.id }})">
                                     <span class="material-icons">edit</span>
                                 </button>
-
-                                <!-- Save button -->
                                 <button type="submit" class="btn btn-success btn-sm edit d-none">
                                     <span class="material-icons">check</span>
                                 </button>
-
-                                <!-- Cancel button -->
                                 <button type="button" class="btn btn-secondary btn-sm edit d-none" onclick="toggleEditCourse({{ course.id }})">
                                     <span class="material-icons">close</span>
                                 </button>
-
-                                <!-- Delete button -->
-                                <button type="button" class="btn btn-outline-danger btn-sm view" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#deleteCourseModal{{ course.id }}">
+                                <button type="button" class="btn btn-outline-danger btn-sm view" data-bs-toggle="modal" data-bs-target="#deleteCourseModal{{ course.id }}">
                                     <span class="material-icons">delete</span>
                                 </button>
                             </div>
@@ -134,12 +156,8 @@ body {
                         <td><input type="text" name="code" class="form-control form-control-sm" placeholder="Course Code"></td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
-                                <button type="submit" class="btn btn-success btn-sm">
-                                    <span class="material-icons">check</span>
-                                </button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddCourseRow()">
-                                    <span class="material-icons">close</span>
-                                </button>
+                                <button type="submit" class="btn btn-success btn-sm"><span class="material-icons">check</span></button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddCourseRow()"><span class="material-icons">close</span></button>
                             </div>
                         </td>
                         </form>
@@ -156,6 +174,7 @@ body {
             </table>
         </div>
     </div>
+
 </div>
 
 <!-- ================= DELETE MODALS ================= -->

@@ -139,6 +139,10 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 
 def admin_login(request):
+
+    username = ""
+    password = ""
+    
     if request.user.is_authenticated:
         return redirect('dashboard_home')
 
@@ -164,7 +168,10 @@ def admin_login(request):
         else:
             messages.error(request, "Invalid credentials or not authorized.")
 
-    return render(request, 'evaluation/admin_login.html')
+    return render(request, 'evaluation/admin_login.html', {
+        'username': username,
+        'password': password
+    })
 
 
 # Admin logout
@@ -179,13 +186,15 @@ from django.db.models.functions import Cast
 from django.utils import timezone
 from datetime import timedelta
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Avg, Count
+from django.utils import timezone
+from datetime import timedelta
+from .models import TeacherEvaluation, Teacher, EvaluationItem
+
 @login_required(login_url='login')
 def dashboard_home(request):
-
-    from django.db.models import Avg, Count
-    from django.utils import timezone
-    from datetime import timedelta
-
     semester = request.GET.get('semester')
     academic_year = request.GET.get('academic_year')
     teacher_id = request.GET.get('teacher')
@@ -196,10 +205,8 @@ def dashboard_home(request):
 
     if semester:
         evaluations_qs = evaluations_qs.filter(semester=semester)
-
     if academic_year:
         evaluations_qs = evaluations_qs.filter(academic_year=academic_year)
-
     if teacher_id:
         evaluations_qs = evaluations_qs.filter(teacher_id=teacher_id)
 
@@ -211,15 +218,13 @@ def dashboard_home(request):
     total_students = evaluations_qs.values('student_id').distinct().count()
 
     # ===============================
-    # AVERAGE RATING (CORRECT)
+    # AVERAGE RATING
     # ===============================
-    avg_rating_value = evaluations_qs.aggregate(
-        avg=Avg('overall_rating')
-    )['avg']
-    avg_rating_value = round(avg_rating_value, 2) if avg_rating_value else 0
+    avg_rating_value = evaluations_qs.aggregate(avg=Avg('overall_rating'))['avg']
+    avg_rating_value = round(avg_rating_value, 2) if avg_rating_value is not None else 0
 
     # ===============================
-    # RATING DISTRIBUTION (Chart.js)
+    # RATING DISTRIBUTION
     # ===============================
     rating_counts_qs = (
         EvaluationItem.objects
@@ -239,20 +244,10 @@ def dashboard_home(request):
     recent_evaluations = evaluations_qs.order_by('-submitted_at')[:5]
 
     # ===============================
-    # COMPLETION RATE (REALISTIC)
+    # COMPLETION & RESPONSE RATE
     # ===============================
-    students_who_submitted = total_students  # already distinct students who submitted
-
     completion_rate = 100 if total_students else 0
-    # (since total_students is derived from submissions already)
-
-    # ===============================
-    # RESPONSE RATE (BETTER METRIC)
-    # ===============================
-    response_rate = round(
-        (total_evaluations / total_students), 2
-    ) if total_students else 0
-    # 👉 avg evaluations per student
+    response_rate = round(total_evaluations / total_students, 2) if total_students else 0
 
     # ===============================
     # WEEKLY GROWTH RATE
@@ -275,7 +270,7 @@ def dashboard_home(request):
     ) if previous_count else 0
 
     # ===============================
-    # TOP TEACHER (CORRECT)
+    # TOP TEACHER
     # ===============================
     top_teacher_data = (
         evaluations_qs
@@ -287,8 +282,7 @@ def dashboard_home(request):
 
     top_teacher = None
     top_teacher_avg = 0
-
-    if top_teacher_data:
+    if top_teacher_data and top_teacher_data['avg'] is not None:
         top_teacher = top_teacher_data
         top_teacher_avg = round(top_teacher_data['avg'], 2)
 
@@ -296,20 +290,15 @@ def dashboard_home(request):
     # QUICK STATS
     # ===============================
     start_of_month = today.replace(day=1)
-
-    monthly_evaluations = evaluations_qs.filter(
-        submitted_at__gte=start_of_month
-    ).count()
-
+    monthly_evaluations = evaluations_qs.filter(submitted_at__gte=start_of_month).count()
     active_teachers = evaluations_qs.values('teacher').distinct().count()
-
     highest_rating = 5.0
 
     # ===============================
-    # STATUS COUNTS (SIMPLIFIED)
+    # STATUS COUNTS
     # ===============================
     completed_count = total_evaluations
-    pending_count = 0   # ❗ cannot be determined without expected submissions
+    pending_count = 0   # ❗ requires expected submissions to calculate
     inprogress_count = 0
 
     # ===============================
@@ -346,19 +335,18 @@ def dashboard_home(request):
 
     return render(request, 'admins/dashboard_home.html', context)
 
+from django.db.models import Q
 
 @login_required(login_url='login')
 def teachers_list(request):
-    # Optional: filter/search
     query = request.GET.get('q')
-    teachers = Teacher.objects.select_related('subject', 'course').all()
+
+    teachers = Teacher.objects.all()  # ✅ NO select_related here
+
     if query:
         teachers = teachers.filter(
-            first_name__icontains=query
-        ) | teachers.filter(
-            last_name__icontains=query
-        ) | teachers.filter(
-            subject__name__icontains=query
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query)
         )
 
     context = {
@@ -939,20 +927,16 @@ def question_delete(request, pk):
 @login_required(login_url='admin_login')
 def teachers_list(request):
     query = request.GET.get('q')
-    teachers = Teacher.objects.select_related('subject', 'course').all()
+    teachers = Teacher.objects.all()  # no select_related since no FK fields
 
     if query:
         teachers = teachers.filter(
             first_name__icontains=query
         ) | teachers.filter(
             last_name__icontains=query
-        ) | teachers.filter(
-            subject__name__icontains=query
-        ) | teachers.filter(
-            course__name__icontains=query
         )
 
-    # Pass subjects and courses for the Add/Edit modals
+    # Pass subjects and courses for the Add/Edit modals (if you need them for evaluation)
     subjects = Subject.objects.all()
     courses = Course.objects.all()
 
@@ -969,21 +953,11 @@ def teacher_add(request):
     if request.method == "POST":
         first_name = request.POST.get("first_name")
         last_name = request.POST.get("last_name")
-        subject_id = request.POST.get("subject")
-        course_id = request.POST.get("course")
-        semester = request.POST.get("semester")
-        academic_year = request.POST.get("academic_year")
 
-        subject = get_object_or_404(Subject, id=subject_id)
-        course = get_object_or_404(Course, id=course_id)
-
+        # Create the teacher
         Teacher.objects.create(
             first_name=first_name,
-            last_name=last_name,
-            subject=subject,
-            course=course,
-            semester=semester,
-            academic_year=academic_year
+            last_name=last_name
         )
         messages.success(request, "Teacher added successfully!")
     return redirect('teachers_list')
@@ -996,18 +970,11 @@ def teacher_edit(request, pk):
     if request.method == "POST":
         teacher.first_name = request.POST.get("first_name")
         teacher.last_name = request.POST.get("last_name")
-        subject_id = request.POST.get("subject")
-        course_id = request.POST.get("course")
-        teacher.semester = request.POST.get("semester")
-        teacher.academic_year = request.POST.get("academic_year")
 
-        teacher.subject = get_object_or_404(Subject, id=subject_id)
-        teacher.course = get_object_or_404(Course, id=course_id)
-
+        # Save changes
         teacher.save()
         messages.success(request, "Teacher updated successfully!")
     return redirect('teachers_list')
-
 
 @login_required(login_url='admin_login')
 def teacher_delete(request, pk):

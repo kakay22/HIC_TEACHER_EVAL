@@ -9,7 +9,7 @@
     </div>
 
     <!-- HEADER -->
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+    <div class="flex sm:flex-row justify-between sm:items-center gap-3 mb-4">
         <!-- Title and Record Count -->
         <div>
             <h2 class="text-lg font-semibold text-gray-800">Evaluations</h2>
@@ -118,11 +118,12 @@
 
         <select class="filter border rounded-lg px-3 py-2 text-sm" name="semester">
             <option value="">Semester</option>
-            {% for sem in semesters %}
-            <option value="{{ sem }}" {% if sem == selected_semester %}selected{% endif %}>
-                {{ sem }}
+            <option value="1st" {% if selected_semester == "1st" %}selected{% endif %}>
+                1st Semester
             </option>
-            {% endfor %}
+            <option value="2nd" {% if selected_semester == "2nd" %}selected{% endif %}>
+                2nd Semester
+            </option>
         </select>
 
         <select id="sortSelect" class="border rounded-lg px-3 py-2 text-sm">
@@ -157,7 +158,12 @@
                 <tbody id="tableBody">
                     {% for eval in page_obj %}
                     <tr class="border-b">
-                        <td class="p-3">{{ eval.teacher.first_name }} {{ eval.teacher.last_name }}</td>
+                        <td class="p-3">
+                            <a href="{% url 'teacher_detail' eval.teacher.id %}" class="text-blue-500 flex items-center gap-1">
+                                {{ eval.teacher.first_name }} {{ eval.teacher.last_name }}
+                                <span class="material-icons text-xs">arrow_forward_ios</span>
+                            </a>
+                        </td>
                         <td class="p-3">{{ eval.subject.name }}</td>
                         <td class="p-3">{{ eval.course.name }}</td>
                         <td class="p-3 text-center">{{ eval.semester }}</td>
