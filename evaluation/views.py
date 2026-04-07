@@ -382,17 +382,35 @@ def teacher_detail(request, pk):
     }
     return render(request, 'admins/teacher_details.html', context)
 
-def courses_list(request):
-    # Optional search
-    query = request.GET.get('q', '')
-    if query:
-        courses = Course.objects.filter(name__icontains=query).order_by('name')
-    else:
-        courses = Course.objects.all().order_by('name')
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from .models import Course
 
-    # Pagination
-    from django.core.paginator import Paginator
-    paginator = Paginator(courses, 20)  # 20 per page
+def courses_list(request):
+    query = request.GET.get('q', '').strip()
+    
+    # Base queryset
+    courses = Course.objects.all().order_by('name')
+    
+    # Filter by search query if exists
+    if query:
+        courses = courses.filter(name__icontains=query)
+
+    # AJAX request for live search
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        results = [
+            {
+                "id": c.id,
+                "name": c.name,
+                "code": c.code or ""
+            }
+            for c in courses
+        ]
+        return JsonResponse({"courses": results})
+
+    # Normal page with pagination
+    paginator = Paginator(courses, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -403,7 +421,6 @@ def courses_list(request):
         'query': query,
     }
     return render(request, 'admins/courses_list.html', context)
-
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
