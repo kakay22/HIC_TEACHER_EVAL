@@ -263,106 +263,121 @@ body { background-color: #f4f6f9; font-family: 'Inter', sans-serif; }
     </div>
     {% endif %}
 {% endfor %}
-
+<div id="url-helper" data-teacher-url="{% url 'teacher_detail' 0 %}"></div>
 <script>
-document.getElementById("teacher-search").addEventListener("keyup", function () {
-    let query = this.value;
+const searchInput = document.getElementById("teacher-search");
+const tableBody = document.querySelector("#teachers-table tbody");
+const mobileContainer = document.querySelector(".mobile-card-scroll");
+const baseUrl = document.getElementById("url-helper").dataset.teacherUrl;
 
-    fetch(`/teachers/search/?q=${query}`)
-        .then(response => response.json())
-        .then(data => {
-            let tableBody = document.querySelector("#teachers-table tbody");
-            let mobileContainer = document.querySelector(".mobile-card-scroll");
+// ✅ Debounce function (prevents too many requests)
+function debounce(func, delay = 400) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
 
-            tableBody.innerHTML = "";
-            mobileContainer.innerHTML = "";
+// ✅ Render function
+function renderTeachers(data) {
+    tableBody.innerHTML = "";
+    mobileContainer.innerHTML = "";
 
-            if (data.teachers.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="2" class="text-center py-4 text-muted">
-                            <span class="material-icons" style="vertical-align:middle;">info</span>
-                            No teachers found.
-                        </td>
-                    </tr>
-                `;
+    if (data.teachers.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="2" class="text-center py-4 text-muted">
+                    <span class="material-icons">info</span>
+                    No teachers found.
+                </td>
+            </tr>
+        `;
 
-                mobileContainer.innerHTML = `
-                    <div class="text-muted-icon">
-                        <span class="material-icons">info</span>
-                        <p class="mt-2 mb-0">No teachers found.</p>
+        mobileContainer.innerHTML = `
+            <div class="text-muted-icon">
+                <span class="material-icons">info</span>
+                <p class="mt-2 mb-0">No teachers found.</p>
+            </div>
+        `;
+        return;
+    }
+
+    data.teachers.forEach(teacher => {
+        const detailUrl = baseUrl.replace("0", teacher.id);
+
+        // ===== DESKTOP =====
+        tableBody.innerHTML += `
+            <tr>
+                <td>
+                    <a href="${detailUrl}" 
+                       class="d-inline-flex align-items-center gap-1 text-primary fw-semibold text-decoration-none">
+                        ${teacher.first_name} ${teacher.last_name}
+                        <span class="material-icons" style="font-size:16px;">open_in_new</span>
+                    </a>
+                </td>
+                <td class="text-center">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                            <span class="material-icons">more_vert</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a href="${detailUrl}" class="dropdown-item">View Details</a>
+                            </li>
+                        </ul>
                     </div>
-                `;
-                return;
-            }
+                </td>
+            </tr>
+        `;
 
-            data.teachers.forEach(teacher => {
+        // ===== MOBILE =====
+        mobileContainer.innerHTML += `
+            <div class="teacher-card d-flex justify-content-between align-items-start">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="material-icons text-primary">person</span>
+                    <h6 class="fw-semibold mb-0">
+                        <a href="${detailUrl}" class="text-decoration-none text-dark">
+                            ${teacher.first_name} ${teacher.last_name}
+                        </a>
+                    </h6>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light rounded-circle p-1" data-bs-toggle="dropdown">
+                        <span class="material-icons">more_vert</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                        <li>
+                            <a href="${detailUrl}" class="dropdown-item d-flex align-items-center gap-2">
+                                <span class="material-icons" style="font-size:18px;">visibility</span> View Details
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    });
 
-                // ===== DESKTOP TABLE =====
-                tableBody.innerHTML += `
-                    <tr>
-                        <td>${teacher.first_name} ${teacher.last_name}</td>
-                        <td class="text-center">
-                            <div class="dropdown" data-bs-display="static">
-                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
-                                    <span class="material-icons">more_vert</span>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a href="/teacher/${teacher.id}/" class="dropdown-item">View Details</a>
-                                    </li>
-                                    <li>
-                                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTeacherModal${teacher.id}">Edit</button>
-                                    </li>
-                                    <li>
-                                        <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal${teacher.id}">Delete</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+    // ✅ Re-init Bootstrap dropdowns
+    document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(el => {
+        new bootstrap.Dropdown(el);
+    });
+}
 
-                // ===== MOBILE CARDS =====
-                mobileContainer.innerHTML += `
-                    <div class="teacher-card d-flex justify-content-between align-items-start">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="material-icons text-primary">person</span>
-                            <h6 class="fw-semibold mb-0">${teacher.first_name} ${teacher.last_name}</h6>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-light rounded-circle p-1" data-bs-toggle="dropdown">
-                                <span class="material-icons">more_vert</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
-                                <li>
-                                    <a href="/teacher/${teacher.id}/" class="dropdown-item d-flex align-items-center gap-2">
-                                        <span class="material-icons" style="font-size:18px;">visibility</span> View Details
-                                    </a>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#editTeacherModal${teacher.id}">
-                                        <span class="material-icons" style="font-size:18px;">edit</span> Edit
-                                    </button>
-                                </li>
-                                <li>
-                                    <button class="dropdown-item text-danger d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal${teacher.id}">
-                                        <span class="material-icons" style="font-size:18px;">delete</span> Delete
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            });
+// ✅ Fetch function
+function fetchTeachers(query) {
+    fetch(`/teachers/search/?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => renderTeachers(data))
+        .catch(err => console.error("Error fetching teachers:", err));
+}
 
-            // Re-initialize Bootstrap dropdowns for dynamically added content
-            var dropdownElements = document.querySelectorAll('.dropdown-toggle, .btn[data-bs-toggle="dropdown"]');
-            dropdownElements.forEach(function (dropdownToggleEl) {
-                new bootstrap.Dropdown(dropdownToggleEl);
-            });
-        })
-        .catch(error => console.error("Error fetching teachers:", error));
-});
+// ✅ Debounced search
+const debouncedSearch = debounce((e) => {
+    fetchTeachers(e.target.value);
+}, 300);
+
+// ✅ Event listener
+searchInput.addEventListener("keyup", debouncedSearch);
 </script>
 {% endblock %}
