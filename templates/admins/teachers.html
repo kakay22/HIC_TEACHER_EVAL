@@ -109,7 +109,15 @@ body { background-color: #f4f6f9; font-family: 'Inter', sans-serif; }
                     {% for teacher in teachers %}
                         {% if teacher.id %}
                         <tr>
-                            <td>{{ teacher.first_name }} {{ teacher.last_name }}</td>
+                            <td>
+                                <a href="{% url 'teacher_detail' teacher.id %}" 
+                                class="d-inline-flex align-items-center gap-1 text-primary fw-semibold text-decoration-none teacher-link">
+                                    
+                                    {{ teacher.first_name }} {{ teacher.last_name }}
+                                    
+                                    <span class="material-icons" style="font-size:16px;">open_in_new</span>
+                                </a>
+                            </td>
                             <td class="text-center">
                                 <div class="dropdown" data-bs-display="static">
                                     <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
