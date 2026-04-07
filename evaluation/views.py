@@ -338,21 +338,25 @@ def dashboard_home(request):
 from django.db.models import Q
 
 @login_required(login_url='login')
-def teachers_list(request):
-    query = request.GET.get('q')
+def teacher_search(request):
+    query = request.GET.get('q', '')
 
-    teachers = Teacher.objects.all()  # ✅ NO select_related here
+    teachers = Teacher.objects.filter(
+        first_name__icontains=query
+    ) | Teacher.objects.filter(
+        last_name__icontains=query
+    )
 
-    if query:
-        teachers = teachers.filter(
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query)
-        )
+    data = [
+        {
+            "id": t.id,
+            "first_name": t.first_name,
+            "last_name": t.last_name,
+        }
+        for t in teachers
+    ]
 
-    context = {
-        'teachers': teachers,
-    }
-    return render(request, 'admins/teachers.html', context)
+    return JsonResponse({"teachers": data})
 
 from django.shortcuts import get_object_or_404, render
 from django.db.models import Avg

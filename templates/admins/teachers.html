@@ -52,6 +52,13 @@ body { background-color: #f4f6f9; font-family: 'Inter', sans-serif; }
 
 .text-muted-icon { display: flex; flex-direction: column; align-items: center; color: #6c757d; margin-top: 2rem; }
 .text-muted-icon .material-icons { font-size: 48px; }
+/* Sticky table header for scrollable table */
+.table-responsive thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa; /* same as header background */
+    z-index: 2;
+}
 </style>
 {% endblock %}
 
@@ -68,10 +75,11 @@ body { background-color: #f4f6f9; font-family: 'Inter', sans-serif; }
         <div class="d-flex gap-2 align-items-center flex-wrap">
 
             <!-- Search -->
-            <form method="GET" class="flex-grow-1">
+            <!-- Live Search -->
+            <form class="flex-grow-1">
                 <div class="input-group">
-                    <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search teacher...">
-                    <button class="btn btn-primary" type="submit">
+                    <input type="text" id="teacher-search" class="form-control" placeholder="Search teacher...">
+                    <button class="btn btn-primary" type="button" id="search-btn">
                         <span class="material-icons" style="font-size:18px;">search</span>
                     </button>
                 </div>
@@ -86,48 +94,49 @@ body { background-color: #f4f6f9; font-family: 'Inter', sans-serif; }
     </div>
 
     <!-- Desktop Table -->
-    <div class="dashboard-card p-0 d-none d-md-block">
-        <div class="table-responsive rounded-2xl">
-            <table class="table table-hover align-middle mb-0 text-nowrap">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th class="text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% if teachers %}
-                        {% for teacher in teachers %}
-                            {% if teacher.id %}
-                            <tr>
-                                <td>{{ teacher.first_name }} {{ teacher.last_name }}</td>
-                                <td class="text-center">
-                                    <div class="dropdown" data-bs-display="static">
-                                        <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
-                                            <span class="material-icons">more_vert</span>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a href="{% url 'teacher_detail' teacher.id %}" class="dropdown-item">View Details</a></li>
-                                            <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTeacherModal{{ teacher.id }}">Edit</button></li>
-                                            <li><button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal{{ teacher.id }}">Delete</button></li>
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
+<div class="dashboard-card p-0 d-none d-md-block">
+    <!-- Table wrapper scrollable based on viewport height -->
+    <div id="teachers-table" class="table-responsive rounded-2xl overflow-auto" style="max-height: 70vh;">
+        <table class="table table-hover align-middle mb-0 text-nowrap">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if teachers %}
+                    {% for teacher in teachers %}
+                        {% if teacher.id %}
                         <tr>
-                            <td colspan="2" class="text-center py-4 text-muted">
-                                <span class="material-icons" style="vertical-align:middle;">info</span>
-                                No teachers found.
+                            <td>{{ teacher.first_name }} {{ teacher.last_name }}</td>
+                            <td class="text-center">
+                                <div class="dropdown" data-bs-display="static">
+                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                        <span class="material-icons">more_vert</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a href="{% url 'teacher_detail' teacher.id %}" class="dropdown-item">View Details</a></li>
+                                        <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTeacherModal{{ teacher.id }}">Edit</button></li>
+                                        <li><button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal{{ teacher.id }}">Delete</button></li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="2" class="text-center py-4 text-muted">
+                            <span class="material-icons" style="vertical-align:middle;">info</span>
+                            No teachers found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
     </div>
+</div>
 
     <!-- Mobile List -->
     <div class="d-block d-md-none mobile-card-scroll">
@@ -231,7 +240,7 @@ body { background-color: #f4f6f9; font-family: 'Inter', sans-serif; }
                 {% csrf_token %}
                 <div class="modal-header">
                     <h5 class="modal-title text-danger">Confirm Delete</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     Are you sure you want to delete <strong>{{ teacher.first_name }} {{ teacher.last_name }}</strong>?
@@ -246,4 +255,63 @@ body { background-color: #f4f6f9; font-family: 'Inter', sans-serif; }
     </div>
     {% endif %}
 {% endfor %}
+
+<script>
+document.getElementById("teacher-search").addEventListener("keyup", function () {
+    let query = this.value;
+
+    fetch(`/teachers/search/?q=${query}`)
+        .then(response => response.json())
+        .then(data => {
+            let tableBody = document.querySelector("#teachers-table tbody");
+            let mobileContainer = document.querySelector(".mobile-card-scroll");
+
+            tableBody.innerHTML = "";
+            mobileContainer.innerHTML = "";
+
+            if (data.teachers.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="text-center py-4 text-muted">
+                            No teachers found.
+                        </td>
+                    </tr>
+                `;
+
+                mobileContainer.innerHTML = `
+                    <div class="text-muted-icon">
+                        <span class="material-icons">info</span>
+                        <p class="mt-2 mb-0">No teachers found.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            data.teachers.forEach(teacher => {
+
+                // ===== DESKTOP TABLE =====
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${teacher.first_name} ${teacher.last_name}</td>
+                        <td class="text-center">
+                            <a href="/teacher/${teacher.id}/" class="btn btn-sm btn-primary">View</a>
+                        </td>
+                    </tr>
+                `;
+
+                // ===== MOBILE CARDS =====
+                mobileContainer.innerHTML += `
+                    <div class="teacher-card d-flex justify-content-between align-items-start">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="material-icons text-primary">person</span>
+                            <h6 class="fw-semibold mb-0">${teacher.first_name} ${teacher.last_name}</h6>
+                        </div>
+                        <a href="/teacher/${teacher.id}/" class="btn btn-sm btn-primary">View</a>
+                    </div>
+                `;
+            });
+        })
+        .catch(error => console.error("Error fetching teachers:", error));
+});
+</script>
 {% endblock %}
