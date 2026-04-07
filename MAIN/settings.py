@@ -80,7 +80,7 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',  # fallback for local use
+        default='postgres://evaluation_db_wsps_user:HN71QMEicvLNFvegs4JoPBUNYiy1FWpJ@dpg-d7a5ht0gjchc739uhiug-a.render.com:5432/evaluation_db_wsps',
         conn_max_age=600,
         ssl_require=True
     )
