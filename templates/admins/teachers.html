@@ -270,7 +270,7 @@ const tableBody = document.querySelector("#teachers-table tbody");
 const mobileContainer = document.querySelector(".mobile-card-scroll");
 const baseUrl = document.getElementById("url-helper").dataset.teacherUrl;
 
-// ✅ Debounce function (prevents too many requests)
+// ✅ Debounce function
 function debounce(func, delay = 400) {
     let timeout;
     return (...args) => {
@@ -279,12 +279,12 @@ function debounce(func, delay = 400) {
     };
 }
 
-// ✅ Render function
+// ✅ Render function for desktop + mobile
 function renderTeachers(data) {
     tableBody.innerHTML = "";
     mobileContainer.innerHTML = "";
 
-    if (data.teachers.length === 0) {
+    if (!data.teachers || data.teachers.length === 0) {
         tableBody.innerHTML = `
             <tr>
                 <td colspan="2" class="text-center py-4 text-muted">
@@ -293,7 +293,6 @@ function renderTeachers(data) {
                 </td>
             </tr>
         `;
-
         mobileContainer.innerHTML = `
             <div class="text-muted-icon">
                 <span class="material-icons">info</span>
@@ -325,6 +324,12 @@ function renderTeachers(data) {
                             <li>
                                 <a href="${detailUrl}" class="dropdown-item">View Details</a>
                             </li>
+                            <li>
+                                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTeacherModal${teacher.id}">Edit</button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal${teacher.id}">Delete</button>
+                            </li>
                         </ul>
                     </div>
                 </td>
@@ -348,9 +353,13 @@ function renderTeachers(data) {
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
                         <li>
-                            <a href="${detailUrl}" class="dropdown-item d-flex align-items-center gap-2">
-                                <span class="material-icons" style="font-size:18px;">visibility</span> View Details
-                            </a>
+                            <a href="${detailUrl}" class="dropdown-item">View Details</a>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTeacherModal${teacher.id}">Edit</button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal${teacher.id}">Delete</button>
                         </li>
                     </ul>
                 </div>
@@ -364,7 +373,7 @@ function renderTeachers(data) {
     });
 }
 
-// ✅ Fetch function
+// ✅ Fetch teachers from search endpoint
 function fetchTeachers(query) {
     fetch(`/teachers/search/?q=${encodeURIComponent(query)}`)
         .then(res => res.json())
