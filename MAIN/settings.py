@@ -76,15 +76,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'MAIN.wsgi.application'
 
-import dj_database_url
-
+# ==========================
+# Database
+# ==========================
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgres://evaluation_db_wsps_user:HN71QMEicvLNFvegs4JoPBUNYiy1FWpJ@dpg-d7a5ht0gjchc739uhiug-a.render.com:5432/evaluation_db_wsps',
-        conn_max_age=600,
-        ssl_require=True
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'HIC_EVALUATION',   # your database name
+#         'USER': 'root',                    # your MySQL username
+#         'PASSWORD': 'shyle@03092021',       # your MySQL password
+#         'HOST': 'localhost',               # or your DB server IP
+#         'PORT': '3306',                    # default MySQL port
+#     }
+# }
 
 # ==========================
 # Password Validation
