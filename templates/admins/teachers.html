@@ -273,6 +273,7 @@ document.getElementById("teacher-search").addEventListener("keyup", function () 
                 tableBody.innerHTML = `
                     <tr>
                         <td colspan="2" class="text-center py-4 text-muted">
+                            <span class="material-icons" style="vertical-align:middle;">info</span>
                             No teachers found.
                         </td>
                     </tr>
@@ -294,7 +295,22 @@ document.getElementById("teacher-search").addEventListener("keyup", function () 
                     <tr>
                         <td>${teacher.first_name} ${teacher.last_name}</td>
                         <td class="text-center">
-                            <a href="/teacher/${teacher.id}/" class="btn btn-sm btn-primary">View</a>
+                            <div class="dropdown" data-bs-display="static">
+                                <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                    <span class="material-icons">more_vert</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a href="/teacher/${teacher.id}/" class="dropdown-item">View Details</a>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTeacherModal${teacher.id}">Edit</button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal${teacher.id}">Delete</button>
+                                    </li>
+                                </ul>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -306,9 +322,36 @@ document.getElementById("teacher-search").addEventListener("keyup", function () 
                             <span class="material-icons text-primary">person</span>
                             <h6 class="fw-semibold mb-0">${teacher.first_name} ${teacher.last_name}</h6>
                         </div>
-                        <a href="/teacher/${teacher.id}/" class="btn btn-sm btn-primary">View</a>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light rounded-circle p-1" data-bs-toggle="dropdown">
+                                <span class="material-icons">more_vert</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                                <li>
+                                    <a href="/teacher/${teacher.id}/" class="dropdown-item d-flex align-items-center gap-2">
+                                        <span class="material-icons" style="font-size:18px;">visibility</span> View Details
+                                    </a>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#editTeacherModal${teacher.id}">
+                                        <span class="material-icons" style="font-size:18px;">edit</span> Edit
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item text-danger d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#confirmDeleteTeacherModal${teacher.id}">
+                                        <span class="material-icons" style="font-size:18px;">delete</span> Delete
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 `;
+            });
+
+            // Re-initialize Bootstrap dropdowns for dynamically added content
+            var dropdownElements = document.querySelectorAll('.dropdown-toggle, .btn[data-bs-toggle="dropdown"]');
+            dropdownElements.forEach(function (dropdownToggleEl) {
+                new bootstrap.Dropdown(dropdownToggleEl);
             });
         })
         .catch(error => console.error("Error fetching teachers:", error));
